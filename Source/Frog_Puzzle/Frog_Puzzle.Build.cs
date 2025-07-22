@@ -19,7 +19,8 @@ public class Frog_Puzzle : ModuleRules
 			"OnlineSubsystemSteam",
             "OnlineSubsystemUtils",
             "AdvancedSessions", 
-			"AdvancedSteamSessions"
+			"AdvancedSteamSessions",
+			"Steamworks"
         });
 	}
 }

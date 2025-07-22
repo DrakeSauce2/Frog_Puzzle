@@ -95,6 +95,7 @@ APlayerState* UMainMenuWidget::GetOwningPlayerState() const
 
 void UMainMenuWidget::UpdateProfileIcons()
 {
+	/*
 	UTexture2D* Avatar = GetSteamAvatar();
 	if (Owner_Profile && Avatar)
 	{
@@ -105,6 +106,42 @@ void UMainMenuWidget::UpdateProfileIcons()
 	if (Friend_Profile && FriendAvatar)
 	{
 		Friend_Profile->SetBrushFromTexture(FriendAvatar);
+	}
+	*/
+	// Local avatar
+	APlayerState* PS = GetOwningPlayerState();
+	if (PS && Owner_Profile)
+	{
+		uint64 LocalSteamID = GetSteamIDFromPlayerState(PS);
+		if (LocalSteamID != 0)
+		{
+			UTexture2D* Avatar = GetSteamAvatarFromSteamID(LocalSteamID);
+			if (Avatar)
+			{
+				Owner_Profile->SetBrushFromTexture(Avatar);
+			}
+		}
+	}
+
+	// Friend avatar
+	AGameStateBase* GameState = UGameplayStatics::GetGameState(this);
+	if (GameState && Friend_Profile)
+	{
+		for (APlayerState* OtherPS : GameState->PlayerArray)
+		{
+			if (OtherPS == PS) continue;
+
+			uint64 FriendSteamID = GetSteamIDFromPlayerState(OtherPS);
+			if (FriendSteamID != 0)
+			{
+				UTexture2D* FriendAvatar = GetSteamAvatarFromSteamID(FriendSteamID);
+				if (FriendAvatar)
+				{
+					Friend_Profile->SetBrushFromTexture(FriendAvatar);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -128,9 +165,9 @@ UTexture2D* UMainMenuWidget::GetSteamAvatar()
 
 	return Avatar;
 	*/
-
 	return nullptr;
 }
+
 
 UTexture2D* UMainMenuWidget::GetFriendSteamAvatar()
 {
@@ -149,6 +186,68 @@ UTexture2D* UMainMenuWidget::GetFriendSteamAvatar()
 		EBlueprintAsyncResultSwitch Result;
 		return UAdvancedSteamFriendsLibrary::GetSteamFriendAvatar(FriendNetId, Result, SteamAvatarSize::SteamAvatar_Large);
 	}
+
+	return nullptr;
 	*/
 	return nullptr;
+}
+
+uint64 UMainMenuWidget::GetSteamIDFromPlayerState(APlayerState* PS) const
+{
+	if (!PS) return 0;
+
+	const TSharedPtr<const FUniqueNetId> NetId = PS->GetUniqueId().GetUniqueNetId();
+	if (!NetId.IsValid() || !NetId->IsValid())
+	{
+		return 0;
+	}
+
+	// Convert NetId string to uint64
+	FString NetIdStr = NetId->ToString();
+	return FCString::Strtoui64(*NetIdStr, nullptr, 10);
+}
+
+UTexture2D* UMainMenuWidget::GetSteamAvatarFromSteamID(uint64 SteamID)
+{
+	if (!SteamAPI_Init())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Steam API not initialized"));
+		return nullptr;
+	}
+
+	CSteamID TargetSteamID(SteamID);
+	int AvatarID = SteamFriends()->GetLargeFriendAvatar(TargetSteamID);
+
+	if (AvatarID == -1)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to get avatar ID from Steam"));
+		return nullptr;
+	}
+
+	uint32 Width = 0, Height = 0;
+	if (!SteamUtils()->GetImageSize(AvatarID, &Width, &Height) || Width == 0 || Height == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Invalid avatar image size"));
+		return nullptr;
+	}
+
+	TArray<uint8> RawData;
+	RawData.SetNumUninitialized(Width * Height * 4); // RGBA
+
+	if (!SteamUtils()->GetImageRGBA(AvatarID, RawData.GetData(), RawData.Num()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to get avatar RGBA data"));
+		return nullptr;
+	}
+
+	UTexture2D* AvatarTexture = UTexture2D::CreateTransient(Width, Height, PF_R8G8B8A8);
+	if (!AvatarTexture) return nullptr;
+
+	void* TextureData = AvatarTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(TextureData, RawData.GetData(), RawData.Num());
+	AvatarTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
+
+	AvatarTexture->UpdateResource();
+
+	return AvatarTexture;
 }

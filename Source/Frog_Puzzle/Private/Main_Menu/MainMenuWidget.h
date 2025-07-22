@@ -61,4 +61,7 @@ protected:
 
 	UTexture2D* GetSteamAvatar();
 	UTexture2D* GetFriendSteamAvatar();
+
+	uint64 GetSteamIDFromPlayerState(APlayerState* PS) const;
+	UTexture2D* GetSteamAvatarFromSteamID(uint64 SteamID);
 };
