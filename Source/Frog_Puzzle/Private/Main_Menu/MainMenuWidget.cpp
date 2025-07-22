@@ -95,19 +95,6 @@ APlayerState* UMainMenuWidget::GetOwningPlayerState() const
 
 void UMainMenuWidget::UpdateProfileIcons()
 {
-	/*
-	UTexture2D* Avatar = GetSteamAvatar();
-	if (Owner_Profile && Avatar)
-	{
-		Owner_Profile->SetBrushFromTexture(Avatar);
-	}
-
-	UTexture2D* FriendAvatar = GetFriendSteamAvatar();
-	if (Friend_Profile && FriendAvatar)
-	{
-		Friend_Profile->SetBrushFromTexture(FriendAvatar);
-	}
-	*/
 	// Local avatar
 	APlayerState* PS = GetOwningPlayerState();
 	if (PS && Owner_Profile)
@@ -143,53 +130,6 @@ void UMainMenuWidget::UpdateProfileIcons()
 			}
 		}
 	}
-}
-
-UTexture2D* UMainMenuWidget::GetSteamAvatar()
-{
-	/*
-	APlayerState* PS = GetOwningPlayerState();
-	if (!PS) return nullptr;
-
-	FBPUniqueNetId NetID;
-	NetID.SetUniqueNetId(PS->GetUniqueId().GetUniqueNetId());
-
-	EBlueprintAsyncResultSwitch Result;
-	UTexture2D* Avatar = UAdvancedSteamFriendsLibrary::GetSteamFriendAvatar(NetID, Result, SteamAvatarSize::SteamAvatar_Large);
-
-	if (Result != EBlueprintAsyncResultSwitch::OnSuccess)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to get avatar from PlayerState"));
-		return nullptr;
-	}
-
-	return Avatar;
-	*/
-	return nullptr;
-}
-
-
-UTexture2D* UMainMenuWidget::GetFriendSteamAvatar()
-{
-	/*
-	AGameStateBase* GameState = UGameplayStatics::GetGameState(this);
-	if (!GameState) return nullptr;
-
-	for (APlayerState* PS : GameState->PlayerArray)
-	{
-		// Skip yourself
-		if (PS == GetOwningPlayerState()) continue;
-
-		FBPUniqueNetId FriendNetId;
-		FriendNetId.SetUniqueNetId(PS->GetUniqueId().GetUniqueNetId());
-
-		EBlueprintAsyncResultSwitch Result;
-		return UAdvancedSteamFriendsLibrary::GetSteamFriendAvatar(FriendNetId, Result, SteamAvatarSize::SteamAvatar_Large);
-	}
-
-	return nullptr;
-	*/
-	return nullptr;
 }
 
 uint64 UMainMenuWidget::GetSteamIDFromPlayerState(APlayerState* PS) const
